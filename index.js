@@ -164,6 +164,10 @@ app.get('/all', (req, res, next) => {
   }
 });
 
+app.use((req, res) => {
+  return new ExpressError('Not Found', 404);
+});
+
 app.use((error, req, res, next) => {
   let status = error.status || 500;
   let message = error.message || 'Something Went Wrong';
