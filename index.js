@@ -8,6 +8,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/mean', (req, res, next) => {
+  const contentType = req.headers['content-type'];
   try {
     const arr = req.query.nums.split(',');
     for (let num of arr) {
@@ -20,19 +21,30 @@ app.get('/mean', (req, res, next) => {
       response: { operation: 'mean', value: mean(nums) },
     };
     if (req.query.save === 'true') {
-      console.log('Hi!');
-      fs.writeFile('results.json', response, 'utf8', (err) => {
-        if (err) {
-          throw new ExpressError(err, 400);
+      response.response.timestamp = Date();
+      fs.writeFile(
+        'results.json',
+        JSON.stringify(response) + '\n',
+        { encoding: 'utf8', flag: 'a' },
+        (err) => {
+          if (err) {
+            throw new ExpressError(err, 400);
+          }
         }
-        return res.status(200).json(response);
-      });
+      );
     }
+    if (contentType === 'text/html') {
+      return res.send(
+        `<h1>Mean of [${req.query.nums}]</h1><h2>${response.response.value}</h2>`
+      );
+    }
+    return res.status(200).json(response);
   } catch (e) {
     next(e);
   }
 });
 app.get('/median', (req, res, next) => {
+  const contentType = req.headers['content-type'];
   try {
     const arr = req.query.nums.split(',');
     for (let num of arr) {
@@ -44,12 +56,33 @@ app.get('/median', (req, res, next) => {
     const response = {
       response: { operation: 'median', value: median(nums) },
     };
-    return res.status(200).json(response);
+    if (req.query.save === 'true') {
+      response.response.timestamp = Date();
+      fs.writeFile(
+        'results.json',
+        JSON.stringify(response) + '\n',
+        { encoding: 'utf8', flag: 'a' },
+        (err) => {
+          if (err) {
+            throw new ExpressError(err, 400);
+          }
+        }
+      );
+    }
+    if (contentType === 'text/html') {
+      return res.send(
+        `<h1>Median of [${req.query.nums}]</h1><h2>${response.response.value}</h2>`
+      );
+    }
+    if (contentType === 'application/json') {
+      return res.status(200).json(response);
+    }
   } catch (e) {
     next(e);
   }
 });
 app.get('/mode', (req, res, next) => {
+  const contentType = req.headers['content-type'];
   try {
     const arr = req.query.nums.split(',');
     for (let num of arr) {
@@ -61,13 +94,34 @@ app.get('/mode', (req, res, next) => {
     const response = {
       response: { operation: 'mode', value: mode(nums) },
     };
-    return res.json(response);
+    if (req.query.save === 'true') {
+      response.response.timestamp = Date();
+      fs.writeFile(
+        'results.json',
+        JSON.stringify(response) + '\n',
+        { encoding: 'utf8', flag: 'a' },
+        (err) => {
+          if (err) {
+            throw new ExpressError(err, 400);
+          }
+        }
+      );
+    }
+    if (contentType === 'text/html') {
+      return res.send(
+        `<h1>Mode of [${req.query.nums}]</h1><h2>${response.response.value}</h2>`
+      );
+    }
+    if (contentType === 'application/json') {
+      return res.status(200).json(response);
+    }
   } catch (e) {
     next(e);
   }
 });
 
 app.get('/all', (req, res, next) => {
+  const contentType = req.headers['content-type'];
   try {
     const arr = req.query.nums.split(',');
     for (let num of arr) {
@@ -84,19 +138,40 @@ app.get('/all', (req, res, next) => {
         mode: mode(nums),
       },
     };
-    return res.json(response);
+    if (req.query.save === 'true') {
+      response.response.timestamp = Date();
+      fs.writeFile(
+        'results.json',
+        JSON.stringify(response) + '\n',
+        { encoding: 'utf8', flag: 'a' },
+        (err) => {
+          if (err) {
+            throw new ExpressError(err, 400);
+          }
+        }
+      );
+    }
+    if (contentType === 'text/html') {
+      return res.send(
+        `<h1>Mean, Median, and Mode for [${req.query.nums}]</h1><h2>Mean: ${response.response.mean}</h2><h2>Median: ${response.response.median}</h2><h2>Mode: ${response.response.mode}</h2>`
+      );
+    }
+    if (contentType === 'application/json') {
+      return res.status(200).json(response);
+    }
   } catch (e) {
     next(e);
   }
 });
 
 app.use((error, req, res, next) => {
-  const status = error.status || 500;
-  const message = error.message || 'Something Went Wrong';
-  return res.status(error.status).json({
+  let status = error.status || 500;
+  let message = error.message || 'Something Went Wrong';
+  return res.status(status).json({
     error: { message, status },
   });
 });
-app.listen(3000, (req, res) => {
-  console.log(`Listening on 3000`);
+
+app.listen(3005, () => {
+  console.log('Server Running On Port 3005');
 });
